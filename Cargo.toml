@@ -2,8 +2,14 @@
 name = "zero2prod"
 version = "0.1.0"
 edition = "2021"
+authors = ["Tomaz Canabrava <tomaz.canabrava@gmail.com>"]
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+path = "src/main.rs"
+name = "zero2prod"
 
 [dependencies]
 axum = "0.6"
@@ -11,3 +17,4 @@ tokio = { version = "1", features = ["full"] }
 hyper = { version = "0.14", features = ["full"] }
 tower = { version = "0.4", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
+reqwest = {version = "0.11"}
