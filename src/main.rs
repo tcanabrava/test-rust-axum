@@ -1,12 +1,6 @@
-use zero2prod::{
-    startup::run,
-    configuration::{
-        get_config,
-    },
-    state::AppState,
-};
+use zero2prod::{configuration::get_config, startup::run, state::AppState};
 
-use sqlx::postgres::{PgPoolOptions};
+use sqlx::postgres::PgPoolOptions;
 
 #[tokio::main]
 async fn main() {
@@ -14,13 +8,12 @@ async fn main() {
 
     let config = match get_config() {
         Ok(config) => config,
-        Err(err) => panic!("{}", err)
+        Err(err) => panic!("{}", err),
     };
 
     let address = format!("127.0.0.1:{}", config.application_port);
 
-    let listener = std::net::TcpListener::bind(&address)
-        .expect("Could not bind to address");
+    let listener = std::net::TcpListener::bind(&address).expect("Could not bind to address");
 
     // setup connection pool
     let pool = PgPoolOptions::new()
@@ -29,7 +22,7 @@ async fn main() {
         .await
         .expect("can't connect to database");
 
-    let state = AppState{db: pool};
+    let state = AppState { db: pool };
 
     let server = run(listener, state);
     server.await.unwrap();

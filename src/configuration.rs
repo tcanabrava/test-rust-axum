@@ -3,7 +3,7 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 pub struct Settings {
     pub database: DatabaseSettings,
-    pub application_port: u16
+    pub application_port: u16,
 }
 
 #[derive(Deserialize)]
@@ -25,11 +25,13 @@ pub fn get_config() -> Result<Settings, config::ConfigError> {
 
 impl DatabaseSettings {
     pub fn connection_string(&self) -> String {
-        format!("postgres://{user}:{pass}@{host}:{port}/{db_name}",
+        format!(
+            "postgres://{user}:{pass}@{host}:{port}/{db_name}",
             user = self.username,
             pass = self.password,
             host = self.host,
             port = self.port,
-            db_name = self.db_name)
+            db_name = self.db_name
+        )
     }
 }
