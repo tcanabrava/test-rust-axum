@@ -1,5 +1,6 @@
-use zero2prod::run;
-use std::{net::TcpListener, thread::spawn};
+use zero2prod::startup::run;
+
+use std::{net::TcpListener};
 
 fn spawn_app() -> String {
     let listener = TcpListener::bind("127.0.0.1:0")
