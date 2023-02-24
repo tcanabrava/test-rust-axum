@@ -2,11 +2,16 @@ use zero2prod::{startup::run, state::AppState};
 
 use std::net::TcpListener;
 
-use sqlx::postgres::PgPoolOptions;
+use sqlx::postgres::{PgPoolOptions};
 
 use zero2prod::configuration::get_config;
 
-async fn spawn_app() -> (String, AppState) {
+struct TestApp {
+    pub address: String,
+    pub state: AppState,
+}
+
+async fn spawn_app() -> TestApp {
     let config = get_config().expect("Failed to read config file");
 
     let connection_str = config.database.connection_string();
@@ -26,16 +31,19 @@ async fn spawn_app() -> (String, AppState) {
     let server = run(listener, state.clone());
     let _ = tokio::spawn(server);
 
-    (format!("http://127.0.0.1:{}", address.port()), state)
+    TestApp {
+        address: format!("http://127.0.0.1:{}", address.port()),
+        state: state
+    }
 }
 
 #[tokio::test]
 async fn health_check_works() {
-    let (addr, _) = spawn_app().await;
+    let app = spawn_app().await;
 
     let client = reqwest::Client::new();
     let response = client
-        .get(format!("{}/health_check", addr))
+        .get(format!("{}/health_check", app.address))
         .send()
         .await
         .expect("Failed to execute command");
@@ -46,12 +54,12 @@ async fn health_check_works() {
 
 #[tokio::test]
 async fn subscribe_returns_200_valid_form_data() {
-    let (addr, state) = spawn_app().await;
+    let app = spawn_app().await;
 
     let client = reqwest::Client::new();
     let body = "user_name=le%20test&email=test@gmail.com";
     let response = client
-        .post(format!("{}/subscribe", addr))
+        .post(format!("{}/subscribe", app.address))
         .header("Content-Type", "application/x-www-form-urlencoded")
         .body(body)
         .send()
@@ -61,7 +69,7 @@ async fn subscribe_returns_200_valid_form_data() {
     assert_eq!(200, response.status().as_u16());
 
     let saved_form = sqlx::query!("SELECT email, name FROM subscriptions")
-        .fetch_one(&state.db)
+        .fetch_one(&app.state.db)
         .await
         .expect("Failed to fetch saved subscriptions");
 
@@ -71,7 +79,7 @@ async fn subscribe_returns_200_valid_form_data() {
 
 #[tokio::test]
 async fn subscribe_returns_400_missing_data() {
-    let (addr, _) = spawn_app().await;
+    let app = spawn_app().await;
     let client = reqwest::Client::new();
 
     let test_cases = vec![
@@ -82,7 +90,7 @@ async fn subscribe_returns_400_missing_data() {
 
     for (body, error_msg) in test_cases {
         let response = client
-            .post(format!("{}/subscribe", addr))
+            .post(format!("{}/subscribe", app.address))
             .header("Content-Type", "application/x-www-form-urlencoded")
             .body(body)
             .send()
