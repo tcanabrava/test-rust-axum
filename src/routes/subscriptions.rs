@@ -22,7 +22,7 @@ pub async fn subscribe(
         .await
         .expect("Error retrieving connection from pool");
 
-    let rex = sqlx::query!(
+    sqlx::query!(
         r#"
             INSERT INTO subscriptions (id, email, name, subscribed_at)
             VALUES ($1, $2, $3, $4)
