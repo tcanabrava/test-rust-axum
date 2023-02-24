@@ -16,13 +16,7 @@ pub async fn subscribe(
     State(state): State<AppState>,
     Form(user): Form<UserSubscribe>,
 ) -> StatusCode {
-    let mut conn = state
-        .db
-        .acquire()
-        .await
-        .expect("Error retrieving connection from pool");
-
-    sqlx::query!(
+    let res = sqlx::query!(
         r#"
             INSERT INTO subscriptions (id, email, name, subscribed_at)
             VALUES ($1, $2, $3, $4)
@@ -32,9 +26,14 @@ pub async fn subscribe(
         user.user_name,
         Utc::now()
     )
-    .execute(&mut conn)
-    .await
-    .expect("Error executing");
+    .execute(&state.db)
+    .await;
 
-    StatusCode::OK
+     match res {
+        Ok(_) => StatusCode::OK,
+        Err(e) => {
+            println!("Failed to execute query: {}", e);
+            StatusCode::UNPROCESSABLE_ENTITY
+        }
+    }
 }
