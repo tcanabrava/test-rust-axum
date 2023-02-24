@@ -1,6 +1,12 @@
-use reqwest::get;
-use zero2prod::startup::run;
-use zero2prod::configuration::*;
+use zero2prod::{
+    startup::run,
+    configuration::{
+        get_config,
+    },
+    state::AppState,
+};
+
+use sqlx::postgres::{PgPoolOptions};
 
 #[tokio::main]
 async fn main() {
@@ -16,7 +22,16 @@ async fn main() {
     let listener = std::net::TcpListener::bind(&address)
         .expect("Could not bind to address");
 
-    let server = run(listener);
+    // setup connection pool
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&config.database.connection_string())
+        .await
+        .expect("can't connect to database");
+
+    let state = AppState{db: pool};
+
+    let server = run(listener, state);
     server.await.unwrap();
     println!("Server finished");
 }
