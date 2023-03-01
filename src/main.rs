@@ -4,12 +4,17 @@ use sqlx::postgres::PgPoolOptions;
 
 #[tokio::main]
 async fn main() {
-    println!("Starting the server");
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::DEBUG)
+        .init();
+
 
     let config = match get_config() {
         Ok(config) => config,
         Err(err) => panic!("{}", err),
     };
+
+    tracing::info!("Application starting!");
 
     let address = format!("127.0.0.1:{}", config.application_port);
 
@@ -26,5 +31,6 @@ async fn main() {
 
     let server = run(listener, state);
     server.await.unwrap();
-    println!("Server finished");
+
+    tracing::info!("Application finished");
 }
