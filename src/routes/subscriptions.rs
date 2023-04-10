@@ -2,7 +2,6 @@ use crate::state::AppState;
 use axum::extract::{Form, State};
 use hyper::StatusCode;
 use serde::Deserialize;
-use tracing::Instrument;
 use chrono::Utc;
 use uuid::Uuid;
 
@@ -12,34 +11,49 @@ pub struct UserSubscribe {
     email: String,
 }
 
+#[tracing::instrument(
+    name = "Adding a new subscriber",
+    skip(state, user),
+    fields(
+        request_id = %Uuid::new_v4(),
+        subscriber_email = %user.email,
+        subscriber_name = %user.user_name
+    )
+)]
 pub async fn subscribe(
     State(state): State<AppState>,
     Form(user): Form<UserSubscribe>,
 ) -> StatusCode {
+     match insert_subscriber(state, user).await {
+        Ok(_) => StatusCode::OK,
+        Err(_) => StatusCode::UNPROCESSABLE_ENTITY
+    }
+}
 
-    let request_id = Uuid::new_v4();
+#[tracing::instrument(
+    name = "Saving subscriber details on the database",
+    skip(state, user)
+)]
+pub async fn insert_subscriber(state: AppState, user: UserSubscribe) -> Result<(), sqlx::Error> {
     let timestamp = Utc::now();
-    let request_span = tracing::debug_span!("Adding a new subscriber", %request_id, timestamp = %timestamp);
 
-    let res = sqlx::query!(
+    let err = sqlx::query!(
         r#"
             INSERT INTO subscriptions (id, email, name, subscribed_at)
             VALUES ($1, $2, $3, $4)
         "#,
-        request_id,
+        Uuid::new_v4(),
         user.email,
         user.user_name,
         timestamp
     )
-    .execute(&state.db)
-    .instrument(request_span)
-    .await;
+    .execute(&state.db).await;
 
-     match res {
-        Ok(_) => StatusCode::OK,
+    match err {
+        Ok(_) => Ok(()),
         Err(e) => {
-            println!("Failed to execute query: {}", e);
-            StatusCode::UNPROCESSABLE_ENTITY
+            tracing::error!("Failed to execute db call {:?}", e);
+            Err(e)
         }
     }
 }
