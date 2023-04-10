@@ -38,3 +38,6 @@ features = [
     "chrono", 
     "migrate"
 ]
+
+[dev-dependencies]
+once_cell = { version = "1.0"}

@@ -14,9 +14,16 @@ use zero2prod::{
         get_config,
         DatabaseSettings,
     },
+    telemetry
 };
 
+use once_cell::sync::Lazy;
 use uuid::Uuid;
+
+static TRACING: Lazy<()> = Lazy::new(|| {
+    let subscriber = telemetry::log_subscriber("unittest".into(), "debug".into());
+    telemetry::init_logging(subscriber);
+});
 
 struct TestApp {
     pub address: String,
@@ -24,6 +31,8 @@ struct TestApp {
 }
 
 async fn spawn_app() -> TestApp {
+    Lazy::force(&TRACING);
+
     let mut config = get_config().expect("Failed to read config file");
 
     config.database.db_name = Uuid::new_v4().to_string();

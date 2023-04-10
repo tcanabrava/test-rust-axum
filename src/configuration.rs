@@ -44,5 +44,4 @@ impl DatabaseSettings {
             port = self.port,
         )
     }
-
 }
