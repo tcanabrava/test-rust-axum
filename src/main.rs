@@ -1,5 +1,6 @@
 use zero2prod::{configuration::get_config, telemetry, startup::run, state::AppState};
 use sqlx::postgres::PgPoolOptions;
+use secrecy::ExposeSecret;
 
 #[tokio::main]
 async fn main() {
@@ -26,7 +27,7 @@ async fn main() {
     // setup connection pool
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&config.database.connection_string())
+        .connect(&config.database.connection_string().expose_secret())
         .await
         .expect("can't connect to database");
 

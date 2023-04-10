@@ -19,6 +19,7 @@ use zero2prod::{
 
 use once_cell::sync::Lazy;
 use uuid::Uuid;
+use secrecy::ExposeSecret;
 
 static TRACING: Lazy<()> = Lazy::new(|| {
     let has_log = std::env::var("TEST_LOG").is_ok();
@@ -67,7 +68,7 @@ async fn spawn_app() -> TestApp {
 
 pub async fn configure_db(config: &DatabaseSettings) -> PgPool {
     let conn_str = config.connection_string_no_db();
-    let mut conn = PgConnection::connect(&conn_str)
+    let mut conn = PgConnection::connect(&conn_str.expose_secret())
         .await.expect("Error creating connection");
 
     conn.execute(format!(r#"CREATE DATABASE "{}"; "#, config.db_name).as_str())
@@ -77,7 +78,7 @@ pub async fn configure_db(config: &DatabaseSettings) -> PgPool {
 
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&config.connection_string())
+        .connect(&config.connection_string().expose_secret())
         .await
         .expect("can't connect to database");
 
