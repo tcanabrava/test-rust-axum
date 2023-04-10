@@ -21,8 +21,23 @@ use once_cell::sync::Lazy;
 use uuid::Uuid;
 
 static TRACING: Lazy<()> = Lazy::new(|| {
-    let subscriber = telemetry::log_subscriber("unittest".into(), "debug".into());
-    telemetry::init_logging(subscriber);
+    let has_log = std::env::var("TEST_LOG").is_ok();
+
+    if has_log {
+        let subscriber = telemetry::log_subscriber(
+            "unittest".into(),
+            "debug".into(),
+            std::io::stdout
+        );
+        telemetry::init_logging(subscriber);
+    } else {
+        let subscriber = telemetry::log_subscriber(
+            "unittest".into(),
+            "debug".into(),
+            std::io::sink
+        );
+        telemetry::init_logging(subscriber);
+    }
 });
 
 struct TestApp {

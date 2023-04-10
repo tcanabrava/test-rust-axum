@@ -3,7 +3,12 @@ use sqlx::postgres::PgPoolOptions;
 
 #[tokio::main]
 async fn main() {
-    let subscriber = telemetry::log_subscriber("Zero2Prod".into(), "info".into());
+    let subscriber = telemetry::log_subscriber(
+        "Zero2Prod".into(),
+        "info".into(),
+        std::io::stdout
+    );
+
     telemetry::init_logging(subscriber);
 
     let config = match get_config() {
