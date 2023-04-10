@@ -1,13 +1,26 @@
 use zero2prod::{configuration::get_config, startup::run, state::AppState};
-
 use sqlx::postgres::PgPoolOptions;
+
+use tracing::subscriber::set_global_default;
+use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
+use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::DEBUG)
-        .init();
+    let env_filter = EnvFilter::try_from_default_env()
+        .unwrap_or_else(|_| EnvFilter::new("info"));
 
+    let formatting_layer = BunyanFormattingLayer::new(
+        "zero2prod".into(),
+        std::io::stdout);
+
+    let subscriber = Registry::default()
+        .with(env_filter)
+        .with(JsonStorageLayer)
+        .with(formatting_layer);
+
+    set_global_default(subscriber)
+        .expect("Failed to set global default");
 
     let config = match get_config() {
         Ok(config) => config,
