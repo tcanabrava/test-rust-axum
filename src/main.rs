@@ -29,8 +29,8 @@ async fn main() {
     // setup connection pool
     let pool = PgPoolOptions::new()
         .max_connections(5)
-        .connect(&config.database.connection_string().expose_secret())
-        .await
+        .acquire_timeout(std::time::Duration::from_secs(2))
+        .connect_lazy(&config.database.connection_string().expose_secret())
         .expect("can't connect to database");
 
     // create our state object that holds database pools
