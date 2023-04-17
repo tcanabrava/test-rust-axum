@@ -7,6 +7,8 @@ RUN apt update && \
 COPY . .
 
 ENV SQLX_OFFLINE true
+ENV APP_ENVIRONMENT production
+
 RUN cargo build --release
 
 ENTRYPOINT ["./target/release/zero2prod"]
