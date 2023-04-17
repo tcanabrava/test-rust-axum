@@ -19,7 +19,9 @@ async fn main() {
 
     tracing::info!("Application starting!");
 
-    let address = format!("127.0.0.1:{port}", port=config.application_port);
+    let address = format!("{host}:{port}", 
+        host = config.application.host,
+        port=config.application.port);
 
     let listener = std::net::TcpListener::bind(&address)
         .expect("Could not bind to address");
